@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 13 15:02:17 2019
+
+@author: roryeggleston
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+#%%
+import matplotlib as mpl
+#%%
+mpl.rcParams['figure.figsize'] = [4.0, 3.0]
+mpl.rcParams['figure.dpi'] = 100
+mpl.rcParams['savefig.dpi'] = 100
+
+mpl.rcParams['font.size'] = 12
+mpl.rcParams['legend.fontsize'] = 'small'
+mpl.rcParams['figure.titlesize'] = 'medium'
+mpl.rcParams['lines.linewidth'] = 1.0
+#%%
+x = np.array([1,2,3,-99,5])
+#%%
+x.mean()
+#%%
+mx = np.ma.masked_array(x, mask=[0,0,0,1,0])
+mx
+#%%
+mx.mean()
+#%%
+mx2 = np.ma.masked_where(x<0,x)
+mx2
+#%%
+np.mean(mx2)
+#%%
+data = np.loadtxt('/Users/roryeggleston/Downloads/populations.txt')
+data
+#%%
+data.shape
+#%%
+data[:,0]
+#%%
+plt.plot(data[:,0], data[:,1])
+plt.plot(data[:,0], data[:,2])
+plt.plot(data[:,0], data[:,3])
+plt.xlabel('Year')
+plt.ylabel('Population')
+plt.legend(['Hares', 'Lynxes', 'Carrots'], loc = 'upper right')
+#%%
+help(plt.legend)
+#%%
+data.T
+#%%
+year, hares, lynxes, carrots = data.T
+#%%
+year
+#%%
+hares
+#%%
+lynxes
+#%%
+carrots
+#%%
+plt.plot(year, hares)
+plt.plot(year, lynxes)
+plt.plot(year, carrots)
+plt.xlabel('Year')
+plt.ylabel('Population')
+plt.legend(['Hares', 'Lynxes', 'Carrots'], loc = 'upper right')
+#%%
+plt.boxplot([hares, lynxes, carrots])
+plt.xlabel('Hares, Lynxes, Carrots')
+plt.ylabel('Populations (thousands)')
+labels = ('Hares', 'Lynxes', 'Carrots')
+#%%
+#data masking w this data-need to remove bad data from hare/lynx data
+np.mean(data, axis = 0)
+#%%
+data.mean(axis = 0)
+#%%
+print(hares.mean())
+print(lynxes.mean())
+print(carrots.mean())
+#%%
+year
+#%%
+(year > 1903)
+#works
+#%%
+(year >= 1903)
+#makes 1903 true
+#%%
+(year >= 1903 & (year <= 1910))
+#"and doesn't work, has to be &
+#%%
+((year >= 1903) & (year <= 1910)) |((year >= 1917) & (year <= 1918))
+#%%
+mask = ((year >= 1903) & (year <= 1910)) |((year >= 1917) & (year <= 1918))
+#%%
+lynxes_masked = np.ma.masked_where(mask, lynxes)
+lynxes_masked
+#%%
+hares_masked = np.ma.masked_where(mask, hares)
+#don't have to do carrots bc that data is fine
+#%%
+plt.plot(year, hares_masked)
+plt.plot(year, lynxes_masked)
+plt.plot(year, carrots)
+plt.xlabel('Year')
+plt.ylabel('Population')
+plt.legend(['Hares', 'Lynxes', 'Carrots'], loc = 'upper right')
+#%%
+print(hares.mean())
+print(hares_masked.mean())
+#%%
+print(lynxes.mean())
+print(lynxes_masked.mean())
+#%%
+plt.boxplot([hares, hares_masked, lynxes, lynxes_masked, carrots])
+plt.xlabel('hares, hares_masked, lynxes, lynxes_masked, carrots')
+plt.ylabel('Populations (thousands)')
+#%%
+print(data)
+#%%
+hares
+#%%
+mask2 = ((year >= 1902) & (year <=1903)) |((year >= 1913) & (year <= 1913))
+print(mask2)
+#%%
+hares_masked2 = np.ma.masked_where(mask2, hares)
+#%%
+hares_masked2
+#%%
+plt.plot(year, hares_masked2)
+plt.plot(year, lynxes_masked)
+plt.plot(year, carrots)
+plt.xlabel('Year')
+plt.ylabel('Population')
+plt.legend(['Hares', 'Lynxes', 'Carrots'], loc = 'upper right')
+#%%
+print(hares_masked2.mean())
+#%%
+plt.boxplot([hares, hares_masked, hares_masked2, lynxes, lynxes_masked, carrots])
+plt.xlabel('hares, hares_masked, hares_masked2, lynxes, lynxes_masked, carrots')
+plt.ylabel('Populations (thousands)')
+#%%
+r = np.corrcoef(hares, lynxes)[0,1]
+# r = 0.072
+#%%
+plt.scatter(hares, lynxes)
+plt.title(('r=' + str(r)))
