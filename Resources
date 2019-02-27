@@ -28,3 +28,5 @@ https://towardsdatascience.com/linear-regression-using-python-b136c91bf0a2
 
 Logistic Regression:
 https://towardsdatascience.com/building-a-logistic-regression-in-python-301d27367c24
+https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+
