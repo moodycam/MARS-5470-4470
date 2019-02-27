@@ -21,3 +21,10 @@ https://water.usgs.gov/ogw/flopy/
 Tip for masked arrays:
 
 https://docs.scipy.org/doc/numpy/reference/generated/numpy.ma.masked_invalid.html#numpy.ma.masked_invalid
+
+
+Linear Regression:
+https://towardsdatascience.com/linear-regression-using-python-b136c91bf0a2
+
+Logistic Regression:
+https://towardsdatascience.com/building-a-logistic-regression-in-python-301d27367c24
