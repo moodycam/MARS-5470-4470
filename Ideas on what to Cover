@@ -31,3 +31,8 @@ Spatio-temporal decomposition:
 •	EOFS/PCA (Empirical orthogonal functions, principal component analysis)
 •	K-means clustering
 •	Neural networks
+
+Machine Learning
+  - scikit-learn
+  - https://medium.freecodecamp.org/the-hitchhikers-guide-to-machine-learning-algorithms-in-python-bfad66adb378
+  
