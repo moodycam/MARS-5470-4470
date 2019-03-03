@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Feb 25 13:32:09 2019
+
+@author: roryeggleston
+"""
+
+#COPY TEXT OF CONSOLE INTO TXT FILE AND SUBMIT W THIS FILE (ALSO ONES PREVIOUSLY TURNED IN)
+#%%
+#MESHGRIDS NOTES
+# Y: 3 3 3 3
+#    2 2 2 2
+#    1 1 1 1
+#X: 1 2 3 4
+#   1 2 3 4
+#   1 2 3 4
+#%%
+#WARM UP EXERCISE 1
+import numpy as np
+import xarray as xr
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+#%%
+Lat = np.arange(38, 43, .01)
+Lon = np.arange(-108, -103, .01)
+#%%
+Lon,Lat = np.meshgrid(Lon,Lat)
+#%%
+H = -100*(Lat - 40)**2 - 400*(Lon + 106)**2 +8000
+H
+#%%
+plt.pcolormesh(Lon,Lat,H, cmap = 'Purples')
+#%%
+#This function describes the Colorado Rockies
+#%%
+plt.contour(Lon, Lat, H)
+#%%
+plt.contourf(Lon, Lat, H)
+#%%
+plt.pcolormesh(Lon,Lat,H, cmap = 'Purples')
+plt.colorbar()
+plt.contour(Lon, Lat, H)
+plt.title("Colorado Rockies Altitudes", fontsize=14)
+#%%
+#FILE INPUT/OUTPUT
+tdata = np.loadtxt('/Users/roryeggleston/Downloads/populations.txt')
+tdata
+#%%
+np.savetxt('test.txt', tdata)
+#%%
+#EXERCISE 2
+#The data is the same, but the data has been saved in scientific notation to the 14th decimal place
+#%%
+#EXERCISE 3
+np.savetxt('test.txt', tdata, fmt = '%.0f', header = 'Year Hare Lynx Carrot')
+#%%
+file = '/Users/roryeggleston/Downloads/CESM.003.SST.1980.nc'
+data = xr.open_dataset(file)
+#%%
+data
+#%%
+lat = np.array(data.lat)
+lon = np.array(data.lon)
+SST = np.array(data.SST)
+#%%
+data.lon
+#%%
+import netCDF4 as nc
+#%%
+data2 = nc.Dataset(file, 'r')
+data2
+#%%
+data2.variables
+#%%
+data2.dimensions
+#%%
+SST2 = data2.variables['SST'][:]
+#%%
+#EXERCISE 4
+#SST2 is a masked array, which is different from SST, which is simply an array
+#%%
+#EXERCISE 5
+np.array(SST2)
+#Removing the mask makes the values that are "nan" in the SST array into a repeating printout of the same very large value, not sure where this value came from specifically
+#%%
+SST3 = np.ma.masked_invalid(SST)
+SST3
+#%%
+#SPREADSHEETS
+import pandas as pd
+#%%
+file = '/Users/roryeggleston/Downloads/movies.xls'
+movies = pd.read_excel(file)
+#%%
+help(movies)
+#%%
+movies2 = xr.Dataset.from_dataframe(movies)
+#%%
+movies2
+#%%
+movies.Year
+#%%
+#DATAQUEST PANDAS EXCEL EXERCISES/PROBLEMS
+movies = pd.read_excel(file)
+movies.head()
+#%%
+movies_sheet1 = pd.read_excel(file, sheetname=0, index_col=0)
+movies_sheet1.head()
+#%%
+movies_sheet2 = pd.read_excel(file, sheetname=1, index_col=0)
+movies_sheet2.head()
+#%%
+movies_sheet3 = pd.read_excel(file, sheetname=2, index_col=0)
+movies_sheet3.head()
+#%%
+movies = pd.concat([movies_sheet1, movies_sheet2, movies_sheet3])
+#%%
+movies.shape
+#%%
+xlsx = pd.ExcelFile(file)
+movies_sheets = []
+for sheet in xlsx.sheet_names:
+    movies_sheets.append(xlsx.parse(sheet))
+movies = pd.concat(movies_sheets)
+#%%
+movies.shape
+#%%
+movies.tail()
+#%%
+sorted_by_gross = movies.sort_values(['Gross Earnings'], ascending=False)
+#%%
+sorted_by_gross["Gross Earnings"].head(10)
+#%%
+sorted_by_gross['Gross Earnings'].head(10).plot(kind='barh')
+plt.show()
+#%%
+movies['IMDB Score'].plot(kind="hist")
+plt.show()
+#%%
+movies.describe()
+#%%
+movies["Gross Earnings"].mean()
+#%%
+movies_skip_rows = pd.read_excel("/Users/roryeggleston/Downloads/movies.xls", header=None, skiprows=4)
+movies_skip_rows.head(5)
+#%%
+movies_skip_rows.columns = ['Title', 'Year', 'Genres', 'Language', 'Country', 'Content Rating', 'Duration', 'Aspect Ratio', 'Budget', 'Gross Earnings', 'Director', 'Actor 1', 'Actor 2', 'Actor 3', 'Facebook Likes - Director', 'Facebook Likes - Actor 1', 'Facebook Likes - Actor 2', 'Facebook Likes - Actor 3', 'Facebook Likes - cast Total', 'Facebook Likes - Movie', 'Facenumber in posters', 'User Votes', 'Reviews by Users', 'Reviews by Critics', 'IMDB Score']
+movies_skip_rows.head()
+#%%
+movies_subset_columns = pd.read_excel(file, parse_cols=6)
+movies_subset_columns.head()
+#%%
+movies["Net Earnings"] = movies["Gross Earnings"] - movies["Budget"]
+#%%
+sorted_movies = movies[["Net Earnings"]].sort_values(["Net Earnings"], ascending=[False])
+sorted_movies.head(10)["Net Earnings"].plot.barh()
+plt.show()
+#%%
+movies_subset = movies[["Year", "Gross Earnings"]]
+movies_subset.head()
+#%%
+earnings_by_year = movies_subset.pivot_table(index=["Year"])
+earnings_by_year.head()
+#%%
+earnings_by_year.plot()
+plt.show()
+#%%
+movies_subset = movies[['Country', 'Language', 'Gross Earnings']]
+movies_subset.head()
+#%%
+earnings_by_co_lang = movies_subset.pivot_table(index=['Country', 'Language'])
+earnings_by_co_lang.head()
+#%%
+earnings_by_co_lang.head(20).plot(kind='bar', figsize=(20,8))
+plt.show()
+#%%
+movies.to_excel('output.xlsx')
+#%%
+movies.head()
+#%%
+movies.to_excel('output.xlsx', index=False)
+#%%
+writer = pd.ExcelWriter('output.xlsx', engine='xlsxwriter')
+movies.to_excel(writer, index=False, sheet_name='report')
+workbook = writer.book
+worksheet = writer.sheets['report']
+#%%
+header_fmt = workbook.add_format({'bold': True})
+worksheet.set_row(0, None, header_fmt)
+#%%
+writer.save()
+#%%
