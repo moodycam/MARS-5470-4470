@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 27 14:43:41 2019
+
+@author: roryeggleston
+"""
+import numpy as np
+import xarray as xr
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+#%%
+import netCDF4 as nc
+#%%
+import pandas as pd
+#%%
+file = '/Users/roryeggleston/Downloads/movies.xls'
+movies = pd.read_excel(file)
+#%%
+#EXERCISE 1
+movies_sheet1 = pd.read_excel(file, sheetname=0, index_col=0)
+movies_sheet1.head()
+#%%
+movies_sheet2 = pd.read_excel(file, sheetname=1, index_col=0)
+movies_sheet2.head()
+#%%
+movies_sheet3 = pd.read_excel(file, sheetname=2, index_col=0)
+movies_sheet3.head()
+#%%
+movies = pd.concat([movies_sheet1, movies_sheet2, movies_sheet3])
+#%%
+movies.shape
+#%%
+movies["Year"].plot(kind="hist", bins = 10, color = "purple")
+plt.xlabel('Year')
+plt.ylabel('Number of films')
+#%%
+movies["Year"].plot(kind="hist", bins = 5, color = "black")
+plt.xlabel('Year')
+plt.ylabel('Number of films')
+#%%
+#It appears that the number of films being produced over the past century has increased exponentially.
+#%%
+#EXERCISE 2
+plt.scatter(movies["Year"], movies["Budget"], color = "purple")
+plt.xlim(1914,2017)
+plt.ylim(0,450000000)
+plt.xlabel("Year")
+plt.ylabel("Budget")
+plt.suptitle("Film Year by Budget")
+#The overall budgets for films also appears to increase exponentially with the years.
+#%%
+#EXERCISE 3
+plt.scatter(movies["Gross Earnings"], movies["Budget"], color = "purple")
+plt.xlim(0, 450000000)
+plt.ylim(0,450000000)
+plt.xlabel("Gross Earnings")
+plt.ylabel("Budget")
+plt.suptitle("Gross Earnings by Budget")
+#Although it is not possible to calculcate the correlation because of the large number of NAN values, it appears as though these variables are at least weakly positively correlated
+#%%
+#EXERCISE 4
+sorted_by_IMDB = movies.sort_values(['IMDB Score'], ascending=True)
+sorted_by_IMDB["IMDB Score"].head(10)
+#"Justin Bieber: Never Say Never" is the film with the lowest IMDB score, with a score of 1.6
+#%%
+#EXERCISE 5
+BadMovies = movies[movies["IMDB Score"] <= 5]
+BadMovies["IMDB Score"].head(10)
+#%%
+BadMovies.to_excel("BadMovies.xlsx")
