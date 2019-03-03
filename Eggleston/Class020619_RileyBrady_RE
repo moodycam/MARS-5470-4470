@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Mar  3 15:51:24 2019
+
+@author: roryeggleston
+"""
+
+#Luminance and saturation can be automatically ordered, hue has no logical order sequence
+#diverging color maps useful for data with critical values/anomalies-these are unclear in black and white, so need to use dashed lines/contours etc to differentiate
+#qualitative color maps are usefulf for data w distint categories (eg species)
+#don't use the rainbow hue color map
+#avoid using reds and greens in color maps to be mindful of color blindness (check out sim daltonism)
+#check out colorbrewer2.org
+#%%
+import matplotlib
+#%%
+import numpy as np
+#%%
+import matplotlib.pyplot as plt
+#%%
+plt.subplots(figsize=(2,2))
+#%%
+fig, ax = plt.subplots(figsize=(10,10), nrows=2, ncols=2)
+ax[1,1].set_facecolor('black')
+#%%
+#LINE PLOTS
+#generate some example data
+t = np.linspace(-np.pi, np.pi, 64, endpoint=True)
+t
+#%%
+c= np.cos(t)
+s = np.sin(t)
+#%%
+fig, ax = plt.subplots(figsize=(3,3))
+ax.plot(t, s)
+ax.plot(t, c)
+#%%
+fig, ax = plt.subplots(figsize=(6,3), ncols=2)
+ax.plot(t, s)
+#BAD, instead do:
+#%%
+fig, ax = plt.subplots(figsize=(6,3), ncols=2)
+ax[0].plot(t, s)
+ax[1].plot(t, c)
+#%%
+#legends + modify inside the plot
+fig, ax = plt.subplots(figsize=(4,4))
+ax.plot(t, c, label='cosin', linewidth=1, linestyle='-', color='#A9A9A9', marker='o', markersize=2)
+ax.plot(t, s, label='sin', linewidth=1, linestyle='-', color='red', marker='+', markersize=2)
+plt.legend()
+#%%
+#messing with axes
+fig, ax = plt.subplots(figsize=(4,4))
+ax.plot(t, c)
+ax.plot(t, s)
+ax.set_title('Sins and Cosins')
+ax.set_xlabel('Time')
+ax.set_ylabel('Magnitude')
+ax.set_ylim([-2,2])
+ax.set_xlim([-10,10])
+#%%
+#style sheets
+plt.style.available
+#%%
+plt.style.use('fivethirtyeight')
+fig, ax = plt.subplots(figsize=(4,4))
+ax.plot(t, s)
+ax.set(title="Sine", xlabel = 'Time', ylabel='Magnitude')
+#%%
+import xarray as xr
+#%%
+infile = open("/Users/roryeggleston/Downloads/CESM.003.SST.1980.nc")
+#%%
+data = xr.open_dataset('/Users/roryeggleston/Downloads/CESM.003.SST.1980.nc')
+lat = np.array(data.lat)
+lon = np.array(data.lon)
+data = np.array(data.SST)
+#%%
+data.shape
+meandata = np.mean(data, axis=0)
+anom = data - meandata
+#%%
+fig, ax = plt.subplots()
+p = ax.pcolormesh(lon, lat, meandata)
+cb = plt.colorbar(p)
+cb.set_label('Sea Surface Temperature [$^{o}$C]')
+ax.set(title='CESM Sea Surface Temperature (1970-1980)', ylabel='Latitude', xlabel = 'Longitude')
+#%%
+fig, ax = plt.subplots()
+p = ax.pcolormesh(lon, lat, meandata, cmap='autumn_r', vmin=-2, vmax=30)
+cb = plt.colorbar(p, extend='both')
+cb.set_label('Sea Surface Temperature [$^{o}$C]')
+ax.set(title='CESM Sea Surface Temperature (1970-1980)', ylabel='Latitude', xlabel = 'Longitude')
+#%%
+fig, ax = plt.subplots()
+p = ax.pcolormesh(lon, lat, anom[10], cmap='RdBu_r')
+cb = plt.colorbar(p, extend='both')
+cb.set_label('Sea Surface Temperature Anomaly [$^{o}$C]')
+ax.set(title='CESM Sea Surface Temperature (1970-1980)', ylabel='Latitude', xlabel = 'Longitude')
+#%%
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from cartopy.util import add_cyclic_point
+#%%
+fig, ax = plt.subplots(subplot_kw=dict(projection=ccrs.Robinson()))
+ax.add_feature(cfeature.LAND, color='k')
+ax.pcolormesh(lon, lat, meandata, transform=ccrs.PlateCarree())
+#%%
+cyclic_data, cyclic_lons = add_cyclic_point(meandata, coord=lon)
+#%%
+fig, ax = plt.subplots(subplot_kw=dict(projection=ccrs.Robinson()))
+ax.add_feature(cfeature.LAND, color='k')
+p = ax.pcolormesh(cyclic_lons, lat, cyclic_data, transform=ccrs.PlateCarree(),
+                  cmap="plasma")
+plt.colorbar(p, orientation='horizontal', pad=0.05, fraction=0.05,
+             extend="both")
+#%%
+fig, ax = plt.subplots(subplot_kw=dict(projection=ccrs.Geostationary()))
+p = ax.pcolormesh(cyclic_lons, lat, cyclic_data, transform=ccrs.PlateCarree(),
+                  cmap="plasma")
+ax.add_feature(cfeature.LAND, color='k', zorder=4)
+plt.colorbar(p, orientation='horizontal', pad=0.05, fraction=0.05,
+             extend="both")
+#%%
+fig, ax = plt.subplots(subplot_kw=dict(projection=ccrs.Geostationary()))
+p = ax.pcolormesh(cyclic_lons, lat, cyclic_data, transform=ccrs.PlateCarree(),
+                  cmap="plasma")
+ax.add_feature(cfeature.LAND, color='k', zorder=4)
+plt.colorbar(p, orientation='horizontal', pad=0.05, fraction=0.05,
+             extend="both")
+
+gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=False,
+                  linewidth=1.5, color='gray', linestyle='-')
+#%%
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+fig, ax = plt.subplots(subplot_kw=dict(projection=ccrs.PlateCarree()))
+p = ax.pcolormesh(cyclic_lons, lat, cyclic_data, transform=ccrs.PlateCarree(),
+                  cmap="plasma")
+ax.add_feature(cfeature.LAND, color='k', zorder=4)
+plt.colorbar(p, orientation='horizontal', pad=0.05, fraction=0.05,
+             extend="both")
+gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                  linewidth=1.5, color='gray', linestyle='--')
+gl.xlabels_bottom = False
+gl.ylabels_left = False
+gl.xformatter = LONGITUDE_FORMATTER
+gl.yformatter = LATITUDE_FORMATTER
