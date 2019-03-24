@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar 18 13:44:22 2019
+
+@author: roryeggleston
+"""
+
+import numpy as np
+import xarray as xr
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+#%%
+import pandas as pd
+#%%
+import netCDF4 as nc
+#%%
+#WARM UP EXERCISE
+#1
+file = '/Users/roryeggleston/Downloads/movies.xls'
+movies = pd.read_excel(file)
+#%%
+movies_sheet1 = pd.read_excel(file, sheetname=0, index_col=0)
+movies_sheet1.head()
+#%%
+movies_sheet2 = pd.read_excel(file, sheetname=1, index_col=0)
+movies_sheet2.head()
+#%%
+movies_sheet3 = pd.read_excel(file, sheetname=2, index_col=0)
+movies_sheet3.head()
+#%%
+movies = pd.concat([movies_sheet1, movies_sheet2, movies_sheet3])
+#%%
+movies.shape
+#%%
+print(movies)
+#%%
+#2
+movies_df = pd.DataFrame(movies)
+#%%
+movies_df.to_xarray()
+#%%
+movies_xr = xr.Dataset.from_dataframe(movies_df)
+#%%
+print(movies_xr)
+#3
+movies_xr.to_netcdf("movies.nc")
+#4
+movies_check = xr.open_dataset("movies.nc")
+#%%
+movies_check
+#%%
+#CORRELATION test of linear relationship between X and Y (assumes data are normal)
+plt.scatter(movies['Budget'], movies['Gross Earnings'])
+plt.plot([0,1E10],[0,1E10], 'k--')
+plt.xlabel('Budget')
+plt.ylabel('Gross Earnings')
+plt.xlim([0,0.1E10])
+plt.ylim([0,1E9])
+#%%
+movies.corr()
+#%%
+Movies_Correlation = movies.corr()
+#%%
+#E1
+print(movies["Duration"])
+#%%
+plt.scatter(movies['Year'], movies['Duration'])
+plt.xlabel('Year')
+plt.ylabel('Duration')
+plt.xlim([1914,2019])
+plt.ylim([0,300])
+#For these two variables to be negatively correlated, it means that as the years progress, movie duration decreases. However, the negative correlation between these two variables does not seem to be very high.
+#%%
+#E2
+#The highest correlation in this dataset is between Facebook likes for the entire cast and Facebook likes for Actor 1. This may be explained by Actor 1 being inherently a part of the entire cast, and therefore will almost always be liked as much as the entirety of the cast.
+#%%
+#LINEAR REGRESSION
+#How well does the model fit the data! whichis where the machine learning bit comes in
+from sklearn import datasets
+#%%
+data = datasets.load_boston()
+#%%
+print(data.DESCR)
+#%%
+df = pd.DataFrame(data.data, columns=data.feature_names)
+#%%
+target = pd.DataFrame(data.target, columns=["MEDV"])
+#%%
+#are # of rooms and value correlated?
+np.corrcoef(df["RM"], target["MEDV"]) #They are moderately strongly correlated
+#%%
+plt.scatter(df["RM"], target["MEDV"])
+plt.xlabel('Number of Rooms')
+plt.ylabel('House value ($1000s)')
+#%%
+from scipy import stats
+#%%
+slope, intercept, r_value, p_value, std_err = stats.linregress(df["RM"],target["MEDV"])
+#%%
+slope
+#%%
+intercept
+#%%
+r_value
+#%%
+p_value
+#%%
+std_err
+#%%
+plt.plot(df["RM"], slope*df["RM"]+intercept, 'k--')
+plt.scatter(df["RM"], target["MEDV"])
+plt.xlabel('Number of Rooms')
+plt.ylabel('House value ($1000s)')
+#%%
+import statsmodels.api as sm
+#%%
+X = df["RM"]
+y = target["MEDV"]
+#%%
+model = sm.OLS(y, X).fit()
+#%%
+model.summary()
+#%%
+predictions = model.predict(X)
+#%%
+plt.plot(X,predictions, 'k--')
+plt.scatter(df["RM"], target["MEDV"])
+plt.xlabel('Number of Rooms')
+plt.ylabel('House value ($1000s)')
+#%%
+#E3
+import seaborn as sns
+#%%
+from sklearn.datasets import load_boston
+boston_dataset = load_boston()
+#%%
+print(boston_dataset.keys())
+#%%
+boston_dataset.DESCR
+#%%
+boston = pd.DataFrame(boston_dataset.data, columns=boston_dataset.feature_names)
+boston.head()
+#%%
+boston['MEDV'] = boston_dataset.target
+#%%
+boston.isnull().sum()
+#%%
+sns.set(rc={'figure.figsize':(11.7,8.27)})
+sns.distplot(boston['MEDV'], bins=30)
+plt.show()
+#%%
+correlation_matrix = boston.corr().round(2)
+# annot = True to print the values inside the square
+sns.heatmap(data=correlation_matrix, annot=True)
+#%%
+plt.figure(figsize=(20,5))
+
+features = ["LSTAT", "RM"]
+target = boston["MEDV"]
+
+for i, col in enumerate(features):
+    plt.subplot(1, len(features), i+1)
+    x = boston[col]
+    y = target
+    plt.scatter(x,y,marker='o')
+    plt.title(col)
+    plt.xlabel(col)
+    plt.ylabel("MEDV")
+#%%
+X = pd.DataFrame(np.c_[boston['LSTAT'], boston['RM']], columns = ['LSTAT','RM'])
+Y = boston['MEDV']
+#%%
+from sklearn.model_selection import train_test_split
+#%%
+X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.2,random_state=5)
+print(X_train.shape)
+print(X_test.shape)
+print(Y_train.shape)
+print(Y_test.shape)
+#%%
+from sklearn.linear_model import LinearRegression
+#%%
+from sklearn.metrics import mean_squared_error
+#%%
+from sklearn.metrics import r2_score
+#%%
+lin_model = LinearRegression()
+lin_model.fit(X_train, Y_train)
+#%%
+y_train_predict = lin_model.predict(X_train)
+rmse = (np.sqrt(mean_squared_error(Y_train, y_train_predict)))
+r2 = r2_score(Y_train, y_train_predict)
+
+print("The model performance for training set")
+print("--------------------------------------")
+print('RMSE is {}'.format(rmse))
+print('R2 score is {}'.format(r2))
+print("\n")
+
+
+y_test_predict = lin_model.predict(X_test)
+rmse = (np.sqrt(mean_squared_error(Y_test, y_test_predict)))
+r2 = r2_score(Y_test, y_test_predict)
+
+print("The model performance for testing set")
+print("--------------------------------------")
+print('RMSE is {}'.format(rmse))
+print('R2 score is {}'.format(r2))
+#%%
+#E4
+plt.figure(figsize=(10,5))
+
+features = ["RM"]
+target = boston["MEDV"]
+
+for i, col in enumerate(features):
+    plt.subplot(1, len(features), i+1)
+    x = boston[col]
+    y = target
+    plt.scatter(x,y,marker='o')
+    plt.title(col)
+    plt.xlabel(col)
+    plt.ylabel("MEDV")
+#%%
+X = pd.DataFrame(np.c_[boston['RM']], columns = ['RM'])
+Y = boston['MEDV']
+#%%
+from sklearn.model_selection import train_test_split
+#%%
+X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.2,random_state=5)
+print(X_train.shape)
+print(X_test.shape)
+print(Y_train.shape)
+print(Y_test.shape)
+#%%
+from sklearn.linear_model import LinearRegression
+#%%
+from sklearn.metrics import mean_squared_error
+#%%
+from sklearn.metrics import r2_score
+#%%
+lin_model = LinearRegression()
+lin_model.fit(X_train, Y_train)
+#%%
+y_train_predict = lin_model.predict(X_train)
+rmse = (np.sqrt(mean_squared_error(Y_train, y_train_predict)))
+r2 = r2_score(Y_train, y_train_predict)
+
+print("The model performance for training set")
+print("--------------------------------------")
+print('RMSE is {}'.format(rmse))
+print('R2 score is {}'.format(r2))
+print("\n")
+
+
+y_test_predict = lin_model.predict(X_test)
+rmse = (np.sqrt(mean_squared_error(Y_test, y_test_predict)))
+r2 = r2_score(Y_test, y_test_predict)
+
+print("The model performance for testing set")
+print("--------------------------------------")
+print('RMSE is {}'.format(rmse))
+print('R2 score is {}'.format(r2))
+print('Slope is {}'.format(slope))
+print('Intercept is {}'.format(intercept))
+#The slope and intercept calculated for both the scipy and toward are both identical, the R2 values were almost identical, they differ by only about 0.002 
