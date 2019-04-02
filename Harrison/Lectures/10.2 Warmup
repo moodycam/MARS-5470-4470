@@ -6,3 +6,5 @@ If you make the timestep 10 times longer (bigger steps), does the solution using
 Is the difference easier to see in the timeseries or phase space plots? What about the RK4? 
 
 Repeat the exercise making the timestep 10 times smaller.
+
+Solutions are posted in the 10.1 solutions notebook
