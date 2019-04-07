@@ -1,0 +1,473 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr  3 13:48:24 2019
+
+@author: roryeggleston
+"""
+
+#WARM-UP
+#1) If you include the squared predator term, the number of predators will decrease as compared to the linear version of the model.
+#2) The populations of both predators and prey slowly decrease over time, seeming to go towards more of a steady state.
+import numpy as np
+import matplotlib.pyplot as plt
+#%%
+alpha = 1.
+beta = 1.2
+gamma = 4.
+delta = 1.
+r = gamma/10
+#%%
+def euler_step(u, f, dt):
+    return u + dt * f(u)
+#%%
+def f(u):
+    x = u[0]
+    y = u[1]
+    return np.array([x*(alpha -beta*y), -gamma*y + delta*x*y - r*y**2])
+#%%
+T = 15.0
+dt = 0.01
+N = int(T/dt) + 1
+x0 = 10.
+y0 = 2.0
+t0 = 0.
+
+u_euler  = np.empty((N,2))
+u_euler[0] = np.array([x0, y0])
+for n in range(N-1):
+    u_euler[n+1] = euler_step(u_euler[n], f, dt)
+#%%
+time = np.linspace(0.0, T, N)
+x_euler = u_euler[:,0]
+y_euler = u_euler[:,1]
+#%%
+plt.plot(time, x_euler, label = 'Prey')
+plt.plot(time, y_euler, label = 'Predator')
+plt.legend(loc='upper right')
+plt.xlabel("Time")
+plt.ylabel("# of each species")
+plt.title("Predator-Prey Model")
+#%%
+plt.plot(x_euler, y_euler, '-->', markevery = 5, label = "Phase Plot")
+plt.legend(loc='upper right')
+plt.xlabel("# of prey")
+plt.ylabel("# of predators")
+plt.title("Predator-Prey Model")
+#%%
+def RK4(u,f,dt):
+    k1 = f(u)
+    u1 = u + (dt/2.)*k1
+    k2 = f(u1)
+    u2 = u + (dt/2.)*k2
+    k3 = f(u2)
+    u3 = u + dt*k3
+    k4 = f(u3)
+    return u + (dt/6.)*(k1 + 2.*k2 + 2.*k3 + k4)
+#%%
+def f(u):
+    x = u[0]
+    y = u[1]
+    return np.array([x*(alpha -beta*y), -gamma*y + delta*x*y - r*y**2])
+#%%
+T = 15.0
+dt = 0.01
+N = int(T/dt) + 1
+x0 = 10.
+y0 = 2.0
+t0 = 0.
+
+u_runge  = np.empty((N,2))
+u_runge[0] = np.array([x0, y0])
+for n in range(N-1):
+    u_runge[n+1] = RK4(u_runge[n], f, dt)
+#%%
+time = np.linspace(0.0, T, N)
+x_runge = u_runge[:,0]
+y_runge = u_runge[:,1]
+#%%
+plt.plot(time, x_runge, label = 'Prey')
+plt.plot(time, y_runge, label = 'Predator')
+plt.legend(loc='upper right')
+plt.xlabel("Time")
+plt.ylabel("# of each species")
+plt.title("Predator-Prey Model")
+#%%
+plt.plot(x_runge, y_runge, '-->', markevery = 5, label = "Phase Plot")
+plt.legend(loc='upper right')
+plt.xlabel("# of prey")
+plt.ylabel("# of predators")
+plt.title("Predator-Prey Model")
+#%%
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import make_moons, make_circles, make_classification
+from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+#%%
+h = .02
+names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Gaussian Process",
+         "Decision Tree", "Random Forest", "Neural Net", "AdaBoost",
+         "Naive Bayes", "QDA"]
+
+classifiers = [
+    KNeighborsClassifier(3),
+    SVC(kernel="linear", C=0.025),
+    SVC(gamma=2, C=1),
+    GaussianProcessClassifier(1.0 * RBF(1.0)),
+    DecisionTreeClassifier(max_depth=5),
+    RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+    MLPClassifier(alpha=1),
+    AdaBoostClassifier(),
+    GaussianNB(),
+    QuadraticDiscriminantAnalysis()]
+
+X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
+                           random_state=1, n_clusters_per_class=1)
+rng = np.random.RandomState(2)
+X += 2 * rng.uniform(size=X.shape)
+linearly_separable = (X, y)
+
+datasets = [make_moons(noise=0.3, random_state=0),
+            make_circles(noise=0.2, factor=0.5, random_state=1),
+            linearly_separable
+            ]
+
+figure = plt.figure(figsize=(27, 9), facecolor = 'w')
+i = 1
+for ds_cnt, ds in enumerate(datasets):
+    X, y = ds
+    X = StandardScaler().fit_transform(X)
+    X_train, X_test, y_train, y_test = \
+        train_test_split(X, y, test_size=.4, random_state=42)
+
+    x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
+    y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                         np.arange(y_min, y_max, h))
+    cm = plt.cm.RdBu
+    cm_bright = ListedColormap(['#FF0000', '#0000FF'])
+    ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+    if ds_cnt == 0:
+        ax.set_title("Input data")
+    ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+               edgecolors='k')
+    ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright, alpha=0.6,
+               edgecolors='k')
+    ax.set_xlim(xx.min(), xx.max())
+    ax.set_ylim(yy.min(), yy.max())
+    ax.set_xticks(())
+    ax.set_yticks(())
+    i += 1
+    for name, clf in zip(names, classifiers):
+        ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+        clf.fit(X_train, y_train)
+        score = clf.score(X_test, y_test)
+        if hasattr(clf, "decision_function"):
+            Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+        else:
+            Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+        Z = Z.reshape(xx.shape)
+        ax.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+                   edgecolors='k')
+        ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
+                   edgecolors='green', alpha=1, zorder = 10)
+
+        ax.set_xlim(xx.min(), xx.max())
+        ax.set_ylim(yy.min(), yy.max())
+        ax.set_xticks(())
+        ax.set_yticks(())
+        if ds_cnt == 0:
+            ax.set_title(name, fontsize = 14)
+        ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
+                size=15, horizontalalignment='right')
+        i += 1
+
+plt.tight_layout()
+#%%
+X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
+                           random_state=1, n_clusters_per_class=1)
+
+plt.scatter(X[:,0],X[:,1], c= y)
+#%%
+X_old = np.copy(X)
+# random # object
+rng = np.random.RandomState(2)
+# add random numbers to data
+X += 2 * rng.uniform(size=X.shape)
+linearly_separable = (X, y)
+#%%
+plt.scatter(X_old[:,0],X_old[:,1], c = y)
+plt.colorbar()
+#%%
+plt.scatter(X[:,0],X[:,1], c = y)
+#%%
+X,y = make_moons(noise=0.3, random_state=12)
+plt.scatter(X[:,0],X[:,1], c = y)
+#%%
+X, y = make_circles(noise=0.2, factor=0.5, random_state=1)
+
+plt.scatter(X[:,0],X[:,1], c= y)
+#%%
+X, y = datasets[0]
+X = StandardScaler().fit_transform(X) #subracts the average (shifts over to zero, scales by SD)
+#%%
+X_train, X_test, y_train, y_test = \
+    train_test_split(X, y, test_size=.4, random_state=42)
+#%%
+x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
+y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                     np.arange(y_min, y_max, h))
+i = 1
+ds_cnt = 0
+cm = plt.cm.RdBu
+cm_bright = ListedColormap(['#FF0000', '#0000FF'])
+ax = plt.subplot(1,1, i)
+if ds_cnt == 0:
+    ax.set_title("Input data")
+ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+           edgecolors='k')
+ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright, alpha=0.6,
+           edgecolors='k')
+ax.set_xlim(xx.min(), xx.max())
+ax.set_ylim(yy.min(), yy.max())
+ax.set_xticks(())
+ax.set_yticks(())
+i += 1
+#%%
+c = 0
+
+name = names[0]
+clf = classifiers[0]
+
+clf.fit(X_train, y_train)
+score = clf.score(X_test, y_test)
+#%%
+name
+#%%
+clf
+#%%
+score
+#%%
+if hasattr(clf, "decision_function"):
+    Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+else:
+    Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+           edgecolors='k')
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
+           edgecolors='orange', alpha=1, zorder = 10)
+#%%
+#EXERCISE 1
+X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
+                           random_state=1, n_clusters_per_class=1)
+
+plt.scatter(X[:,0],X[:,1], c= y)
+#%%
+X_old = X
+rng = np.random.RandomState(2)
+X += 2 * rng.uniform(size=X.shape)
+linearly_separable = (X, y)
+#%%
+plt.scatter(X_old[:,0],X_old[:,1], c = y)
+plt.colorbar()
+#%%
+plt.scatter(X[:,0],X[:,1], c = y)
+#If you use X_old = X, then it automatically will make you use X, even if you try to modify X_old later, so to make modifications you need to make a copy of X to work with.
+#%%
+#EXERCISE 2a
+X,y = make_moons(noise=0.3, random_state=12)
+plt.scatter(X[:,0],X[:,1], c = y)
+#%%
+X,y = make_moons(noise=1.0, random_state=20)
+plt.scatter(X[:,0],X[:,1], c = y)
+#Changing the noise and random state seems to cause the two different types to either meld more or become more distinct.
+#%%
+#EXERCISE 2b
+X, y = make_circles(noise=0.2, factor=0.5, random_state=1)
+plt.scatter(X[:,0],X[:,1], c= y)
+#%%
+X, y = make_circles(noise=0.2, factor=0.2, random_state=1)
+
+plt.scatter(X[:,0],X[:,1], c= y)
+#Factor essentially changes the diameter of the "circle", specifically the yellow data points.
+#%%
+#EXERCISE 3
+X, y = datasets[0]
+X = StandardScaler().fit_transform(X)
+#%%
+f, (ax1, ax2) = plt.subplots(1, 2)
+ax1.scatter(X_old[:,0], X_old[:,1],c=y)
+
+ax2.scatter(X[:,0], X[:,1],c=y)
+#The scaled data is, as described in the instructions centered on zero, which also help create two distinct groups, while the unscaled data is not centered on 0 and is much less distinct in separations.
+#%%
+#EXERCISE 4
+#60% of the data is used for training in this code, given that 40% is used for testing.
+#%%
+#EXERCISE 5
+if hasattr(clf, "decision_function"):
+    Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+else:
+    Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+#xx.ravel() puts the xx array into one dimension.
+#%%
+#EXERCISE 6
+#The light blue and peach portions represent the overlap of the two areas where the distinction is unclear, and could ultimately end up being either one.
+#%%
+#EXERCISE 7
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+           edgecolors='k')
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
+           edgecolors='orange', alpha=1, zorder = 10)
+#There are a few outliers (two blue points in red, part of the test group). Because these were in the test group, and not the training group, this is likely why they ended up in the red section. This is therefore reasonable, given the training data.
+#%%
+#EXERCISE 8
+c = 2
+name = names[2]
+clf = classifiers[2]
+clf.fit(X_train, y_train)
+score = clf.score(X_test, y_test)
+#%%
+name
+#%%
+score
+#%%
+clf
+#%%
+if hasattr(clf, "decision_function"):
+    Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+else:
+    Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+           edgecolors='k')
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
+           edgecolors='orange', alpha=1, zorder = 10)
+#The RBF SVM seems to more strictly define where the two groups are concentrated, and where there is more uncertainty. This seems to be good for figuring out outliers. It works fairly well on this data set, with two outliers from the blue in the red agin.
+#%%
+#EXERCISE 9
+c = 3
+name = names[3]
+clf = classifiers[3]
+clf.fit(X_train, y_train)
+score = clf.score(X_test, y_test)
+#%%
+name
+#%%
+score
+#%%
+clf
+#%%
+if hasattr(clf, "decision_function"):
+    Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+else:
+    Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+           edgecolors='k')
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
+           edgecolors='orange', alpha=1, zorder = 10)
+#The Gaussian Process method seems less strict than the RBF SVM, though with the same 2 outliers. Apparently it works by making all the linear combinations fit normal distributions.
+#%%
+#EXERCISE 10
+c = 7
+name = names[7]
+clf = classifiers[7]
+clf.fit(X_train, y_train)
+score = clf.score(X_test, y_test)
+#%%
+name
+#%%
+score
+#%%
+clf
+#%%
+if hasattr(clf, "decision_function"):
+    Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+else:
+    Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+           edgecolors='k')
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
+           edgecolors='orange', alpha=1, zorder = 10)
+#The Adaboost method is not at all good or accurate with this data, and there seems to be more overlap between the two groups.
+#%%
+#EXERCISE 11
+X, y = datasets[2]
+X = StandardScaler().fit_transform(X)
+#%%
+c = 9
+name = names[9]
+clf = classifiers[9]
+clf.fit(X_train, y_train)
+score = clf.score(X_test, y_test)
+#%%
+name
+#%%
+score
+#%%
+clf
+#%%
+if hasattr(clf, "decision_function"):
+    Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+else:
+    Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+#%%
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, cmap=cm, alpha=.8)
+plt.colorbar()
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+           edgecolors='k')
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
+           edgecolors='orange', alpha=1, zorder = 10)
+#The QDA method is apparently for separating objects or events by a quadratic surface (generalization of conic sections), and it does not work very well for this data. There are quite a few outliers on both sides.

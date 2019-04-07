@@ -1,0 +1,214 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Apr  1 14:51:40 2019
+
+@author: roryeggleston
+"""
+
+import matplotlib
+import cartopy.crs as ccrs
+#%%
+shp
+#%%
+crs = ccrs.Orthographic()
+crs_proj4 = crs.proj4_init
+df = shp.to_crs(crs_proj4)
+ax = df.plot(column='Shape_Area', cmap='Greens')
+#%%
+#Warm-Up 1
+USLMES_shp = shp[shp['USLMES'] == 'Yes']
+USLMES_shp
+#%%
+Area = shp['SUM_GIS_KM'].values
+Area
+#%%
+def make_colormap(data, cmap_name, norm='linear'):
+    cmap = matplotlib.cm.get_cmap(cmap_name)
+    if norm == 'linear':
+        norm = matplotlib.colors.Normalize(min(data), max(data))
+    elif norm == 'log':
+        norm = matplotlib.colors.LogNorm(min(data), max(data))
+    else:
+        raise ValueError("Supply 'linear' or 'log' for norm.")
+    sm = matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap)
+    sm._A = []
+    return sm
+#%%
+def lat_lon_formatter(ax):
+    lon_formatter = cticker.LongitudeFormatter()
+    lat_formatter = cticker.LatitudeFormatter()
+    ax.xaxis.set_major_formatter(lon_formatter)
+    ax.yaxis.set_major_formatter(lat_formatter)
+    ax.tick_params(labelsize=16)
+    
+#this uses the above latlon formatter
+def set_up_map(ax, x0, x1, y0, y1):
+    # land overlay
+    ax.add_feature(cfeature.LAND, facecolor='k')
+    # zoom on  desired region
+    ax.set_extent([x0, x1, y0, y1])
+    
+    #better ticks
+    ax.set_xticks(np.arange(x0, x1, 30), crs=ccrs.PlateCarree())
+    ax.set_yticks(np.arange(y0, y1, 10), crs=ccrs.PlateCarree())
+    lat_lon_formatter(ax)
+#%%
+f, axes = plt.subplots(figsize=(8,3),
+                       subplot_kw=dict(projection=ccrs.PlateCarree()))
+sm = make_colormap(Area, 'cool', norm = 'log')
+for i, LME in enumerate(USLMES_shp['LME_NAME'].values):
+    poly = select_shape(USLMES_shp, 'LME_NAME', LME)
+    color = sm.to_rgba(Area[i])
+    test = axes.add_patch(PolygonPatch(poly, fc= color, zorder=4))
+set_up_map(axes, -180, -20, 0, 85)
+axes.add_feature(cfeature.LAND, color='green')
+cb = plt.colorbar(sm, orientation='vertical', pad=0.05, fraction=0.09)
+cb.set_label('LME Area') 
+#%%
+#Warm-Up 2
+f, axes = plt.subplots(figsize=(8,3),
+                       subplot_kw=dict(projection=ccrs.PlateCarree()))
+sm = make_colormap(Area, 'cool', norm = 'log')
+for i, LME in enumerate(USLMES_shp['LME_NAME'].values):
+    poly = select_shape(USLMES_shp, 'LME_NAME', LME)
+    color = sm.to_rgba(Area[i])
+    test = axes.add_patch(PolygonPatch(poly, fc= color, zorder=4))
+axes.axis('scaled')
+axes.add_feature(cfeature.LAND, color='green')
+cb = plt.colorbar(sm, orientation='vertical', pad=0.05, fraction=0.09)
+cb.set_label('LME Area')
+#%%
+#Scikitlearn Stuff
+import pandas as pd
+url = "https://community.watsonanalytics.com/wp-content/uploads/2015/04/WA_Fn-UseC_-Sales-Win-Loss.csv"
+#%%
+sales_data = pd.read_csv(url)
+#%%
+sales_data.head()
+#%%
+sales_data.head(n=2)
+#%%
+sales_data.tail()
+#%%
+sales_data.tail(n=2)
+#%%
+sales_data.dtypes
+#%%
+import seaborn as sns
+#%%
+import matplotlib.pyplot as plt
+#%%
+sns.set(style="whitegrid", color_codes=True) #plt background color
+sns.set(rc={'figure.figsize':(11.7,8.27)}) #setting plot size
+sns.countplot('Route To Market', data=sales_data, hue= 'Opportunity Result') #create countplot
+sns.despine(offset=10, trim=True) #remove top and down margin
+#%%
+sns.set(rc={'figure.figsize':(16.7,13.27)})
+sns.violinplot(x='Opportunity Result', y='Client Size By Revenue', hue='Opportunity Result', data=sales_data)
+plt.show()
+#%%
+from sklearn import preprocessing
+#%%
+le = preprocessing.LabelEncoder()
+encoded_value = le.fit_transform(['paris', 'paris', 'tokyo', 'amsterdam'])
+print(encoded_value)
+#%%
+print("Supplies Subgroup' : ",sales_data['Supplies Subgroup'].unique())
+print("Region : ",sales_data['Region'].unique())
+print("Route To Market : ",sales_data['Route To Market'].unique())
+print("Opportunity Result : ",sales_data['Opportunity Result'].unique())
+print("Competitor Type : ",sales_data['Competitor Type'].unique())
+print("'Supplies Group : ",sales_data['Supplies Group'].unique())
+#%%
+from sklearn import preprocessing
+le = preprocessing.LabelEncoder()
+sales_data['Supplies Subgroup'] = le.fit_transform(sales_data['Supplies Subgroup'])
+sales_data['Region'] = le.fit_transform(sales_data['Region'])
+sales_data['Route To Market'] = le.fit_transform(sales_data['Route To Market'])
+sales_data['Opportunity Result'] = le.fit_transform(sales_data['Opportunity Result'])
+sales_data['Competitor Type'] = le.fit_transform(sales_data['Competitor Type'])
+sales_data['Supplies Group'] = le.fit_transform(sales_data['Supplies Group'])
+sales_data.head()
+#%%
+cols = [col for col in sales_data.columns if col not in ['Opportunity Number', 'Opportunity Result']]
+data = sales_data[cols]
+target = sales_data['Opportunity Result']
+data.head(n=2)
+#%%
+from sklearn.model_selection import train_test_split
+data_train, data_test, target_train, target_test = train_test_split(data,target, test_size = 0.30, random_state = 10)
+#%%
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
+#%%
+gnb = GaussianNB()
+pred = gnb.fit(data_train, target_train).predict(data_test)
+print("Naive-Bayes accuracy : ", accuracy_score(target_test, pred, normalize = True))
+#%%
+from sklearn.svm import LinearSVC
+from sklearn.metrics import accuracy_score
+#%%
+svc_model = LinearSVC(random_state=0)
+pred = svc_model.fit(data_train, target_train).predict(data_test)
+print("LinearSVC accuracy : ", accuracy_score(target_test, pred, normalize = True))
+#%%
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+#%%
+neigh = KNeighborsClassifier(n_neighbors=3)
+neigh.fit(data_train, target_train)
+pred = neigh.predict(data_test)
+print("KNeighbors accuracy score : ", accuracy_score(target_test, pred))
+#%%
+#EXERCISE 1
+sns.set(style="whitegrid", color_codes=True) #plt background color
+sns.set(rc={'figure.figsize':(11.7,8.27)}) #setting plot size
+sns.countplot('Route To Market', data=sales_data, hue= 'Opportunity Result') #create countplot
+sns.despine(offset=10, trim=True) #remove top and down margin
+#%%
+sns.set(style="whitegrid", color_codes=True) #plt background color
+sns.set(rc={'figure.figsize':(11.7,8.27)}) #setting plot size
+sns.countplot('Route To Market', data=sales_data, hue= 'Opportunity Result') #create countplot
+#According to the tutorial, despine removes the top and bottom margins of the plot, however, in practice it doesn't seem that it actually changes much in these plots, and is thus not that useful/worth including.
+#%%
+#EXERCISE 2
+sns.set(rc={'figure.figsize':(16.7,13.27)})
+sns.set(font_scale = 2)
+sns.violinplot(x='Opportunity Result', y='Client Size By Revenue', hue='Opportunity Result', data=sales_data)
+plt.show()
+#Uuse sns.set(font_scale)
+#%%
+#EXERCISE 3
+le = preprocessing.LabelEncoder()
+encoded_value = le.fit_transform(['Paris', 'Paris', 'Tokyo', 'Amsterdam'])
+print(encoded_value)
+#VS
+#%%
+le = preprocessing.LabelEncoder()
+encoded_value = le.fit_transform(['paris', 'paris', 'tokyo', 'amsterdam'])
+print(encoded_value)
+#VS
+#%%
+le = preprocessing.LabelEncoder()
+encoded_value = le.fit_transform(['Paris', 'paris', 'tokyo', 'amsterdam'])
+print(encoded_value)
+#If you use both lower and upper case letters within a list, Label Encoder is case-sensitive, as can be seen when you use both Paris and paris
+#%%
+#EXERCISE 4
+#There are a number of ways to preserve the original text data, the simplest being just to name the numeric version of the data something different, thereby preserving the original as a reference.
+#%%
+#EXERCISE 5
+#The "cols" for-loop is a bit of code that isolates the "Opportunity Result" and "Opportunity Number" columns from the other columns. It works by specifying that it wants all data from columns not in those two others columns.
+#%%
+#EXERCISE 6
+#The random_state is basically a way to ask the random number generator to smix up the data in a specified order.
+#%%
+#EXERCISE 7
+data.count()
+#%%
+target.count()
+#The size of the data variable and the target variable are both 78025 for each column. To have 80% of the data used for training, change the value of test_size to 0.20.
+#%%
+#EXERCISE 8
+#The Naive-Bayes accuracy means that the feature is moderately connected (predicted) by the tested variables. So this means that the business could use this method/data to put more resources into the features that yield the best opportunity results, base on this model.
